@@ -1,0 +1,28 @@
+// Preppin' Data Challenge Link: https://preppindata.blogspot.com/2023/01/2023-week-1-data-source-bank.html
+
+// Output 1: Total Values of Transactions by each bank
+SELECT SPLIT_PART(transaction_code, '-', 1) AS bank,
+    SUM(value)
+FROM PD2023_WK01
+GROUP BY bank
+;
+
+// Output 2: Total Values of Transactions by each bank
+SELECT SPLIT_PART(transaction_code, '-', 1) AS bank,
+    CASE ONLINE_OR_IN_PERSON
+        WHEN 1 THEN 'Online'
+        WHEN 2 THEN 'In-person'
+        END AS online_or_in_person,
+    DAYNAME(DATE(transaction_date, 'dd/MM/yyyy hh24:mi:ss')) as transaction_date,
+    SUM(value)
+FROM PD2023_WK01
+GROUP BY bank, online_or_in_person, transaction_date
+;
+
+// Output 3: Total Values by Bank and Customer Code
+SELECT SPLIT_PART(transaction_code, '-', 1) AS bank,
+    customer_code,
+    SUM(value)
+FROM PD2023_WK01
+GROUP BY bank, customer_code
+;
