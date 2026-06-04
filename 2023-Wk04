@@ -1,0 +1,43 @@
+// Preppin' Data Challenge Link: https://preppindata.blogspot.com/2023/01/2023-week-4-new-customers.html
+
+WITH unioned_data AS (
+    SELECT *, '01' as month FROM PD2023_WK04_JANUARY
+    UNION ALL
+    SELECT *, '02' as month FROM PD2023_WK04_FEBRUARY
+    UNION ALL
+    SELECT *, '03' as month FROM PD2023_WK04_MARCH
+    UNION ALL
+    SELECT *, '04' as month FROM PD2023_WK04_APRIL
+    UNION ALL
+    SELECT *, '05' as month FROM PD2023_WK04_MAY
+    UNION ALL
+    SELECT *, '06' as month FROM PD2023_WK04_JUNE
+    UNION ALL
+    SELECT *, '07' as month FROM PD2023_WK04_JULY
+    UNION ALL
+    SELECT *, '08' as month FROM PD2023_WK04_AUGUST
+    UNION ALL
+    SELECT *, '09' as month FROM PD2023_WK04_SEPTEMBER
+    UNION ALL
+    SELECT *, '10' as month FROM PD2023_WK04_OCTOBER
+    UNION ALL
+    SELECT *, '11' as month FROM PD2023_WK04_NOVEMBER
+    UNION ALL
+    SELECT *, '12' as month FROM PD2023_WK04_DECEMBER
+),
+
+cleaned_data AS (
+    SELECT
+        *, 
+        CONCAT(joining_day, '/', month, '/', '2023') AS joining_date
+    FROM unioned_data
+    PIVOT(MIN(value) FOR demographic IN ('Ethnicity' AS ethnicity, 'Date of Birth' AS date_of_birth, 'Account Type' AS account_type))
+)
+
+SELECT id,
+    DATE(joining_date, 'dd/MM/yyyy') AS joining_date,
+    account_type,
+    DATE(date_of_birth, 'MM/dd/yyyy') AS date_of_birth,
+    ethnicity
+FROM cleaned_data
+;
