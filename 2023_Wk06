@@ -1,4 +1,4 @@
-// --------- PD2023_WK06 ---------
+// Preppin' Data Challenge Link: https://preppindata.blogspot.com/2023/02/2023-week-6-dsb-customer-ratings.html
 
 WITH mobile_pivot AS (
     SELECT customer_id,
