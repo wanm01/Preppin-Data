@@ -1,0 +1,88 @@
+// Preppin' Data Challenge Link: https://preppindata.blogspot.com/2023/02/2023-week-8-taking-stock.html
+
+WITH wk08_union AS (
+    SELECT 1 as file_date, * FROM pd2023_wk08_01
+    UNION ALL 
+    SELECT 2 as file_date, * FROM pd2023_wk08_02
+    UNION ALL 
+    SELECT 3 as file_date, * FROM pd2023_wk08_03
+    UNION ALL 
+    SELECT 4 as file_date, * FROM pd2023_wk08_04
+    UNION ALL 
+    SELECT 5 as file_date, * FROM pd2023_wk08_05
+    UNION ALL 
+    SELECT 6 as file_date, * FROM pd2023_wk08_06
+    UNION ALL 
+    SELECT 7 as file_date, * FROM pd2023_wk08_07
+    UNION ALL 
+    SELECT 8 as file_date, * FROM pd2023_wk08_08
+    UNION ALL 
+    SELECT 9 as file_date, * FROM pd2023_wk08_09
+    UNION ALL 
+    SELECT 10 as file_date, * FROM pd2023_wk08_10
+    UNION ALL 
+    SELECT 11 as file_date, * FROM pd2023_wk08_11
+    UNION ALL 
+    SELECT 12 as file_date, * FROM pd2023_wk08_12
+),
+
+market_and_purchase_grouping AS (
+    SELECT file_date,
+        id,
+        first_name,
+        last_name,
+        ticker,
+        sector,
+        stock_name,
+        CASE
+            WHEN ((SUBSTR(market_cap,2,LENGTH(market_cap)-2))::float *
+            (CASE 
+                    WHEN RIGHT(market_cap,1)='B' THEN 1000000000
+                    WHEN RIGHT(market_cap,1)='M' THEN 1000000
+                END))<100000000 THEN 'Small' 
+            WHEN ((SUBSTR(market_cap,2,LENGTH(market_cap)-2))::float *
+                (CASE 
+                    WHEN RIGHT(market_cap,1)='B' THEN 1000000000
+                    WHEN RIGHT(market_cap,1)='M' THEN 1000000
+                END))<1000000000 THEN 'Medium' 
+            WHEN ((SUBSTR(market_cap,2,LENGTH(market_cap)-2))::float *
+                (CASE 
+                    WHEN RIGHT(market_cap,1)='B' THEN 1000000000
+                    WHEN RIGHT(market_cap,1)='M' THEN 1000000
+                END))<100000000000 THEN 'Large'
+            ELSE 'Huge'
+        END as market_cap_category,
+        CASE 
+            WHEN (SUBSTR(purchase_price,2,LENGTH(purchase_price)))::float < 25000 THEN 'Low'
+            WHEN (SUBSTR(purchase_price,2,LENGTH(purchase_price)))::float < 50000 THEN 'Medium'
+            WHEN (SUBSTR(purchase_price,2,LENGTH(purchase_price)))::float < 75000 THEN 'High'
+            WHEN (SUBSTR(purchase_price,2,LENGTH(purchase_price)))::float <= 100000 THEN 'Very High'
+        END as price_category,
+    market,
+    market_cap,
+    purchase_price
+    FROM wk08_union
+    WHERE market_cap <> 'n/a' 
+), 
+
+ranked AS (
+    SELECT 
+    RANK() OVER(PARTITION BY file_date, market_cap_category, price_category ORDER BY (SUBSTR(purchase_price,2,LENGTH(purchase_price)))::float DESC) as rank,
+    *
+FROM market_and_purchase_grouping
+)
+
+SELECT 
+    market_cap_category, 
+    price_category,
+    file_date,
+    ticker,
+    sector,
+    market,
+    stock_name,
+    market_cap,
+    purchase_price,
+    rank
+FROM ranked 
+WHERE rank <=5
+;
