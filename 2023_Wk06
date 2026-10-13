@@ -1,0 +1,43 @@
+// --------- PD2023_WK06 ---------
+
+WITH mobile_pivot AS (
+    SELECT customer_id,
+        mobile_app,
+        mobile_app_rating
+    FROM TIL_PLAYGROUND.PREPPIN_DATA_INPUTS.PD2023_WK06_DSB_CUSTOMER_SURVEY AS wk06
+    UNPIVOT(
+        mobile_app_rating FOR mobile_app IN (MOBILE_APP___EASE_OF_USE AS EASE_OF_USE, MOBILE_APP___EASE_OF_ACCESS AS EASE_OF_ACCESS, MOBILE_APP___NAVIGATION AS NAVIGATION, MOBILE_APP___LIKELIHOOD_TO_RECOMMEND AS LIKELIHOOD_TO_RECOMMEND)
+    )
+),
+
+online_pivot AS (
+    SELECT customer_id,
+        online_interface,
+        online_interface_rating
+    FROM TIL_PLAYGROUND.PREPPIN_DATA_INPUTS.PD2023_WK06_DSB_CUSTOMER_SURVEY
+    UNPIVOT(
+        online_interface_rating FOR online_interface IN (ONLINE_INTERFACE___EASE_OF_USE AS EASE_OF_USE, ONLINE_INTERFACE___EASE_OF_ACCESS AS EASE_OF_ACCESS, ONLINE_INTERFACE___NAVIGATION AS NAVIGATION, ONLINE_INTERFACE___LIKELIHOOD_TO_RECOMMEND AS LIKELIHOOD_TO_RECOMMEND)
+    )
+),
+
+preference_dat AS (
+    SELECT m.customer_id,
+        CASE
+            WHEN AVG(mobile_app_rating) - AVG(online_interface_rating) >= 2 THEN 'Mobile App Superfan'
+            WHEN AVG(mobile_app_rating) - AVG(online_interface_rating) >= 1 THEN 'Mobile App Fan'
+            WHEN AVG(mobile_app_rating) - AVG(online_interface_rating) > -1 AND AVG(mobile_app_rating) - AVG(online_interface_rating) < 1 THEN 'Neutral'
+            WHEN AVG(mobile_app_rating) - AVG(online_interface_rating) <= -2 THEN 'Online Interface Superfan'
+            WHEN AVG(mobile_app_rating) - AVG(online_interface_rating) <= -1 THEN 'Online Interface Fan'
+        END AS preference,
+        AVG(mobile_app_rating) - AVG(online_interface_rating) AS diff_avg_rating
+    FROM mobile_pivot AS m
+    INNER JOIN online_pivot AS o ON o.customer_id = m.customer_id AND mobile_app = online_interface
+    GROUP BY m.customer_id
+)
+
+SELECT preference,
+    ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 2) AS "% of Total"
+FROM preference_dat
+GROUP BY preference
+ORDER BY "% of Total" DESC
+;
