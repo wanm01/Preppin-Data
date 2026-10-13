@@ -1,0 +1,40 @@
+// Preppin' Data Challenge Link: https://preppindata.blogspot.com/2023/02/2023-week-7-flagging-fraudulent.html
+
+WITH account_info_clean AS (
+SELECT account_number,
+    account_type,
+    TRIM(split.value) AS account_holder_id,
+    balance_date,
+    balance
+FROM TIL_PLAYGROUND.PREPPIN_DATA_INPUTS.PD2023_WK07_ACCOUNT_INFORMATION AS acc,
+    LATERAL SPLIT_TO_TABLE(acc.account_holder_id, ',') AS split
+),
+
+account_holder_clean AS (
+SELECT account_holder_id,
+    name,
+    date_of_birth,
+    LPAD(contact_number, 11, '0') AS contact_number,
+    first_line_of_address
+FROM TIL_PLAYGROUND.PREPPIN_DATA_INPUTS.PD2023_WK07_ACCOUNT_HOLDERS
+)
+
+SELECT 
+    trans_p.transaction_id,
+    account_to,
+    transaction_date,
+    value,
+    account_number,
+    account_type,
+    balance_date,
+    balance,
+    name,
+    date_of_birth,
+    contact_number,
+    first_line_of_address
+FROM TIL_PLAYGROUND.PREPPIN_DATA_INPUTS.PD2023_WK07_TRANSACTION_PATH AS trans_p
+INNER JOIN TIL_PLAYGROUND.PREPPIN_DATA_INPUTS.PD2023_WK07_TRANSACTION_DETAIL AS trans_d ON trans_p.transaction_id = trans_d.transaction_id
+    INNER JOIN account_info_clean AS acc_i ON trans_p.account_from = acc_i.account_number
+    INNER JOIN account_holder_clean AS acc_h ON acc_h.account_holder_id = acc_i.account_holder_id
+WHERE CANCELLED_ <> 'Y' AND value > 1000 AND account_type <> 'Platinum'
+;
